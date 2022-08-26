@@ -5,13 +5,14 @@ from __future__ import annotations
 from functools import partial
 from pathlib import Path
 
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+from hyperopt import hp
 from ray import tune
 from ray.tune.schedulers import ASHAScheduler
+from ray.tune.search.hyperopt import HyperOptSearch
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
@@ -111,10 +112,11 @@ def train_mnist(config, n_epochs=10):
 
 
 if __name__ == "__main__":
-    search_space = {
-        "lr": tune.sample_from(lambda spec: 10 ** (-10 * np.random.rand())),
-        "momentum": tune.uniform(0.1, 0.9),
+    space = {
+        "lr": hp.loguniform("lr", 1e-10, 0.1),
+        "momentum": hp.uniform("momentum", 0.1, 0.9),
     }
+    hyperopt_search = HyperOptSearch(space, metric="mean_accuracy", mode="max")
 
     # Uncomment this to enable distributed execution
     # `ray.init(address="auto")`
@@ -124,9 +126,10 @@ if __name__ == "__main__":
 
     tuner = tune.Tuner(
         partial(train_mnist, n_epochs=100),
-        param_space=search_space,
         tune_config=tune.TuneConfig(
-            scheduler=ASHAScheduler(metric="mean_accuracy", mode="max"), num_samples=100
+            scheduler=ASHAScheduler(metric="mean_accuracy", mode="max"),
+            num_samples=100,
+            search_alg=hyperopt_search,
         ),
     )
     results = tuner.fit()
