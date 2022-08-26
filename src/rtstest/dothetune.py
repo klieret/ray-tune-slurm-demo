@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from functools import partial
 from pathlib import Path
 
 import numpy as np
@@ -68,7 +69,7 @@ def test(model, data_loader):
     return correct / total
 
 
-def train_mnist(config):
+def train_mnist(config, n_epochs=10):
     # Data Setup
     mnist_transforms = transforms.Compose(
         [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
@@ -96,7 +97,7 @@ def train_mnist(config):
     optimizer = optim.SGD(
         model.parameters(), lr=config["lr"], momentum=config["momentum"]
     )
-    for i in range(10):
+    for i in range(n_epochs):
         train(model, optimizer, train_loader)
         acc = test(model, test_loader)
 
@@ -121,7 +122,7 @@ if __name__ == "__main__":
     datasets.MNIST("~/data", train=True, download=True)
 
     tuner = tune.Tuner(
-        train_mnist,
+        partial(train_mnist, n_epochs=100),
         param_space=search_space,
     )
     results = tuner.fit()
