@@ -124,5 +124,6 @@ if __name__ == "__main__":
     tuner = tune.Tuner(
         partial(train_mnist, n_epochs=100),
         param_space=search_space,
+        tune_config=tune.TuneConfig(num_samples=100),
     )
     results = tuner.fit()
