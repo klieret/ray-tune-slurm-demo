@@ -113,7 +113,7 @@ def train_mnist(config, n_epochs=10):
 
 if __name__ == "__main__":
     space = {
-        "lr": hp.loguniform("lr", 1e-10, 0.1),
+        "lr": hp.loguniform("lr", -10, -1),
         "momentum": hp.uniform("momentum", 0.1, 0.9),
     }
     hyperopt_search = HyperOptSearch(space, metric="mean_accuracy", mode="max")
@@ -125,9 +125,9 @@ if __name__ == "__main__":
     datasets.MNIST("~/data", train=True, download=True)
 
     tuner = tune.Tuner(
-        partial(train_mnist, n_epochs=100),
+        partial(train_mnist, n_epochs=20),
         tune_config=tune.TuneConfig(
-            scheduler=ASHAScheduler(metric="mean_accuracy", mode="max"),
+            # scheduler=ASHAScheduler(metric="mean_accuracy", mode="max"),
             num_samples=100,
             search_alg=hyperopt_search,
         ),
