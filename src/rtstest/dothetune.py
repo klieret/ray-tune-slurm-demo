@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -72,13 +74,16 @@ def train_mnist(config):
         [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
     )
 
+    data_dir = Path("~/data").expanduser()
     train_loader = DataLoader(
-        datasets.MNIST("./data", train=True, download=True, transform=mnist_transforms),
+        datasets.MNIST(
+            str(data_dir), train=True, download=True, transform=mnist_transforms
+        ),
         batch_size=64,
         shuffle=True,
     )
     test_loader = DataLoader(
-        datasets.MNIST("./data", train=False, transform=mnist_transforms),
+        datasets.MNIST(str(data_dir), train=False, transform=mnist_transforms),
         batch_size=64,
         shuffle=True,
     )
