@@ -11,6 +11,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from ray import tune
+from ray.tune.schedulers import ASHAScheduler
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
@@ -124,6 +125,8 @@ if __name__ == "__main__":
     tuner = tune.Tuner(
         partial(train_mnist, n_epochs=100),
         param_space=search_space,
-        tune_config=tune.TuneConfig(num_samples=100),
+        tune_config=tune.TuneConfig(
+            scheduler=ASHAScheduler(metric="mean_accuracy", mode="max"), num_samples=100
+        ),
     )
     results = tuner.fit()
