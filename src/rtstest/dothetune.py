@@ -116,7 +116,9 @@ if __name__ == "__main__":
         "lr": hp.loguniform("lr", -10, -1),
         "momentum": hp.uniform("momentum", 0.1, 0.9),
     }
-    hyperopt_search = HyperOptSearch(space, metric="mean_accuracy", mode="max")
+    hyperopt_search = HyperOptSearch(
+        space, metric="mean_accuracy", mode="max", n_initial_points=40
+    )
 
     # Uncomment this to enable distributed execution
     # `ray.init(address="auto")`
@@ -127,7 +129,7 @@ if __name__ == "__main__":
     tuner = tune.Tuner(
         partial(train_mnist, n_epochs=20),
         tune_config=tune.TuneConfig(
-            # scheduler=ASHAScheduler(metric="mean_accuracy", mode="max"),
+            scheduler=ASHAScheduler(metric="mean_accuracy", mode="max"),
             num_samples=100,
             search_alg=hyperopt_search,
         ),
