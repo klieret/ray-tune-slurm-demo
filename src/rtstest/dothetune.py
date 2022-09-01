@@ -5,12 +5,17 @@ from __future__ import annotations
 from functools import partial
 from pathlib import Path
 
+import click
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from hyperopt import hp
 from ray import tune
+from ray.air import RunConfig, ScalingConfig
+from ray.air.callbacks.mlflow import MLflowLoggerCallback
+from ray.train.torch import TorchTrainer
+from ray.tune.logger import TBXLoggerCallback
 from ray.tune.schedulers import ASHAScheduler
 from ray.tune.search.hyperopt import HyperOptSearch
 from torch.utils.data import DataLoader
@@ -111,27 +116,58 @@ def train_mnist(config, n_epochs=10):
             torch.save(model.state_dict(), "./model.pth")
 
 
-if __name__ == "__main__":
-    space = {
-        "lr": hp.loguniform("lr", -10, -1),
-        "momentum": hp.uniform("momentum", 0.1, 0.9),
-    }
-    hyperopt_search = HyperOptSearch(
-        space, metric="mean_accuracy", mode="max", n_initial_points=40
-    )
-
+@click.command()
+@click.option(
+    "--tune",
+    "do_tune",
+    help="Run Tune experiments",
+)
+def main(do_tune=False):
     # Uncomment this to enable distributed execution
     # `ray.init(address="auto")`
 
     # Download the dataset first
     datasets.MNIST("~/data", train=True, download=True)
 
-    tuner = tune.Tuner(
-        partial(train_mnist, n_epochs=20),
-        tune_config=tune.TuneConfig(
-            scheduler=ASHAScheduler(metric="mean_accuracy", mode="max"),
-            num_samples=100,
-            search_alg=hyperopt_search,
-        ),
-    )
-    results = tuner.fit()
+    if do_tune:
+        space = {
+            "lr": hp.loguniform("lr", -10, -1),
+            "momentum": hp.uniform("momentum", 0.1, 0.9),
+        }
+        hyperopt_search = HyperOptSearch(
+            space, metric="mean_accuracy", mode="max", n_initial_points=40
+        )
+
+        tuner = tune.Tuner(
+            partial(train_mnist, n_epochs=20),
+            tune_config=tune.TuneConfig(
+                scheduler=ASHAScheduler(metric="mean_accuracy", mode="max"),
+                num_samples=100,
+                search_alg=hyperopt_search,
+            ),
+        )
+        tuner.fit()
+    else:
+        config = dict(
+            lr=1e-10,
+            momentum=0.5,
+        )
+
+        def train_func():
+            return train_mnist(config, n_epochs=20)
+
+        trainer = TorchTrainer(
+            train_func,
+            scaling_config=ScalingConfig(num_workers=2),
+            run_config=RunConfig(
+                callbacks=[
+                    MLflowLoggerCallback(experiment_name="train_experiment"),
+                    TBXLoggerCallback(),
+                ],
+            ),
+        )
+        trainer.fit()
+
+
+if __name__ == "__main__":
+    main()
