@@ -121,9 +121,6 @@ def train_mnist(config, n_epochs=10):
     "--tune",
     "do_tune",
     help="Run Tune experiments",
-    is_flag=True,
-    show_default=True,
-    default=False,
 )
 def main(do_tune=False):
     # Uncomment this to enable distributed execution
@@ -148,9 +145,11 @@ def main(do_tune=False):
                 num_samples=100,
                 search_alg=hyperopt_search,
             ),
-            callbacks=[
-                MLflowLoggerCallback(experiment_name="tune_experiment"),
-            ],
+            run_config=RunConfig(
+                callbacks=[
+                    MLflowLoggerCallback(experiment_name="tune_experiment"),
+                ]
+            ),
         )
         tuner.fit()
     else:
