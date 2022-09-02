@@ -121,6 +121,9 @@ def train_mnist(config, n_epochs=10):
     "--tune",
     "do_tune",
     help="Run Tune experiments",
+    is_flag=True,
+    show_default=True,
+    default=False,
 )
 def main(do_tune=False):
     # Uncomment this to enable distributed execution
