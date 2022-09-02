@@ -61,4 +61,4 @@ for ((i = 1; i <= worker_num; i++)); do
 done
 
 # ===== Call your code below =====
-python3 dothetune.py
+python3 dothetune.py --tune
