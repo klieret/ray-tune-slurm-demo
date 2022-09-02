@@ -4,8 +4,8 @@
 # THIS FILE WAS FIRST CREATED WITH THE CONFIG CREATOR FROM THE RAY TUNE TUTORIAL
 # However, some flags that weren't understood by tigergpu were removed again.
 
-#SBATCH --job-name=first_slurm_job.sh
-#SBATCH --output=first_slurm_job.sh.log
+#SBATCH --job-name=test_slurm.sh
+#SBATCH --output=test_slurm.log
 
 ### This script works for any number of nodes, Ray will find and manage all resources
 #SBATCH --nodes=10
