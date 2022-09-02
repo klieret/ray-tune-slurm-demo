@@ -145,6 +145,9 @@ def main(do_tune=False):
                 num_samples=100,
                 search_alg=hyperopt_search,
             ),
+            callbacks=[
+                MLflowLoggerCallback(experiment_name="tune_experiment"),
+            ],
         )
         tuner.fit()
     else:
