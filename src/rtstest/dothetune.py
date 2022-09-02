@@ -13,9 +13,12 @@ import torch.optim as optim
 from hyperopt import hp
 from ray import tune
 from ray.air import RunConfig, ScalingConfig
-from ray.air.callbacks.mlflow import MLflowLoggerCallback
+
+#  from ray.air.callbacks.mlflow import MLflowLoggerCallback
 from ray.train.torch import TorchTrainer
-from ray.tune.logger import TBXLoggerCallback
+from ray.tune.integration.wandb import WandbLoggerCallback
+
+#  from ray.tune.logger import TBXLoggerCallback
 from ray.tune.schedulers import ASHAScheduler
 from ray.tune.search.hyperopt import HyperOptSearch
 from torch.utils.data import DataLoader
@@ -150,7 +153,10 @@ def main(do_tune=False):
             ),
             run_config=RunConfig(
                 callbacks=[
-                    MLflowLoggerCallback(experiment_name="tune_experiment"),
+                    # MLflowLoggerCallback(experiment_name="tune_experiment"),
+                    WandbLoggerCallback(
+                        api_key_file="~/.wandb_api_key", project="Wandb_example"
+                    ),
                 ]
             ),
         )
@@ -169,8 +175,11 @@ def main(do_tune=False):
             scaling_config=ScalingConfig(num_workers=2),
             run_config=RunConfig(
                 callbacks=[
-                    MLflowLoggerCallback(experiment_name="train_experiment"),
-                    TBXLoggerCallback(),
+                    # MLflowLoggerCallback(experiment_name="train_experiment"),
+                    # TBXLoggerCallback(),
+                    WandbLoggerCallback(
+                        api_key_file="~/.wandb_api_key", project="Wandb_example"
+                    ),
                 ],
             ),
         )
