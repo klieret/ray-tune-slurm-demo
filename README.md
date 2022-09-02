@@ -1,4 +1,4 @@
-# Testing ray tuning with slurm job submission
+# Testing ray tune + slurm + mlflow
 
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/klieret/ray-tune-slurm-test/main.svg)](https://results.pre-commit.ci/latest/github/klieret/ray-tune-slurm-test/main)
 [![License](https://img.shields.io/github/license/klieret/ray-tune-slurm-test)](https://github.com/klieret/ray-tune-slurm-test/blob/master/LICENSE.txt)
@@ -9,7 +9,7 @@
 
 ## 📝 Description
 
-Testing ray tune with slurm batch submission for the Princeton tigergpu cluster.
+Testing ray tune with slurm batch submission and MLFlow on the the Princeton tigergpu cluster.
 
 ## 📦 Installation
 
