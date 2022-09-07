@@ -139,6 +139,7 @@ def main(do_tune=False):
         space = {
             "lr": hp.loguniform("lr", -10, -1),
             "momentum": hp.uniform("momentum", 0.1, 0.9),
+            "simpleconstant": 3.4,
         }
         hyperopt_search = HyperOptSearch(
             space, metric="mean_accuracy", mode="max", n_initial_points=40
