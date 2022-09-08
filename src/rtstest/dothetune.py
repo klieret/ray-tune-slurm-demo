@@ -1,8 +1,8 @@
-# Based on https://docs.ray.io/en/master/tune/getting-started.html#tune-tutorial
+# Originally based on
+# https://docs.ray.io/en/master/tune/getting-started.html#tune-tutorial
 
 from __future__ import annotations
 
-from functools import partial
 from pathlib import Path
 
 import click
@@ -79,8 +79,7 @@ def test(model, data_loader):
     return correct / total
 
 
-def train_mnist(config, n_epochs=10):
-    # Data Setup
+def train_mnist(config):
     mnist_transforms = transforms.Compose(
         [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
     )
@@ -107,7 +106,7 @@ def train_mnist(config, n_epochs=10):
     optimizer = optim.SGD(
         model.parameters(), lr=config["lr"], momentum=config["momentum"]
     )
-    for i in range(n_epochs):
+    for i in range(config.get("n_epochs", 10)):
         train(model, optimizer, train_loader)
         acc = test(model, test_loader)
 
@@ -146,7 +145,7 @@ def main(do_tune=False):
         )
 
         tuner = tune.Tuner(
-            partial(train_mnist, n_epochs=20),
+            train_mnist,
             tune_config=tune.TuneConfig(
                 scheduler=ASHAScheduler(metric="mean_accuracy", mode="max"),
                 num_samples=100,
@@ -167,12 +166,9 @@ def main(do_tune=False):
             lr=1e-10,
             momentum=0.5,
         )
-
-        def train_func():
-            return train_mnist(config, n_epochs=20)
-
         trainer = TorchTrainer(
-            train_func,
+            train_mnist,
+            train_loop_config=config,
             scaling_config=ScalingConfig(num_workers=2),
             run_config=RunConfig(
                 callbacks=[
