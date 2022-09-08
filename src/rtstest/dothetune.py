@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import copy
 from pathlib import Path
 
 import click
@@ -26,12 +27,10 @@ from torchvision import datasets, transforms
 
 
 class ConvNet(nn.Module):
-    def __init__(self):
+    def __init__(self, conf_out_channels=3):
         super().__init__()
-        # In this example, we don't change the model architecture
-        # due to simplicity.
-        self.conv1 = nn.Conv2d(1, 3, kernel_size=3)
-        self.fc = nn.Linear(192, 10)
+        self.conv1 = nn.Conv2d(1, conf_out_channels, kernel_size=3)
+        self.fc = nn.Linear(64 * conf_out_channels, 10)
 
     def forward(self, x):
         x = F.relu(F.max_pool2d(self.conv1(x), 3))
@@ -40,17 +39,12 @@ class ConvNet(nn.Module):
         return F.log_softmax(x, dim=1)
 
 
-# Change these values if you want the training to run quicker or slower.
-EPOCH_SIZE = 512
-TEST_SIZE = 256
-
-
-def train(model, optimizer, train_loader):
+def train(model, optimizer, train_loader, epoch_size=512):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
         # We set this just for the example to run quickly.
-        if batch_idx * len(data) > EPOCH_SIZE:
+        if batch_idx * len(data) > epoch_size:
             return
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
@@ -60,7 +54,7 @@ def train(model, optimizer, train_loader):
         optimizer.step()
 
 
-def test(model, data_loader):
+def test(model, data_loader, test_size=256):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.eval()
     correct = 0
@@ -68,7 +62,7 @@ def test(model, data_loader):
     with torch.no_grad():
         for batch_idx, (data, target) in enumerate(data_loader):
             # We set this just for the example to run quickly.
-            if batch_idx * len(data) > TEST_SIZE:
+            if batch_idx * len(data) > test_size:
                 break
             data, target = data.to(device), target.to(device)
             outputs = model(data)
@@ -100,8 +94,7 @@ def train_mnist(config):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    model = ConvNet()
-    model.to(device)
+    model = ConvNet(conf_out_channels=config.get("conf_out_channels", 3)).to(device)
 
     optimizer = optim.SGD(
         model.parameters(), lr=config["lr"], momentum=config["momentum"]
@@ -150,11 +143,14 @@ def main(do_tune=False):
     )
 
     if do_tune:
-        space = {
-            "lr": hp.loguniform("lr", -10, -1),
-            "momentum": hp.uniform("momentum", 0.1, 0.9),
-            "simpleconstant": 3.4,
-        }
+        space = copy.deepcopy(train_config)
+        space.update(
+            {
+                "lr": hp.loguniform("lr", -10, -1),
+                "momentum": hp.uniform("momentum", 0.1, 0.9),
+                "conf_out_channels": hp.choice("conf_out_channels", [3, 6, 9]),
+            }
+        )
         hyperopt_search = HyperOptSearch(
             space, metric="mean_accuracy", mode="max", n_initial_points=40
         )
