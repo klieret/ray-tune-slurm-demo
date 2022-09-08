@@ -12,12 +12,10 @@ import torch.nn.functional as F
 import torch.optim as optim
 from hyperopt import hp
 from ray import tune
-from ray.air import RunConfig, ScalingConfig
+from ray.air import CheckpointConfig, RunConfig
+from ray.air.callbacks.wandb import WandbLoggerCallback
 
 #  from ray.air.callbacks.mlflow import MLflowLoggerCallback
-from ray.train.torch import TorchTrainer
-from ray.tune.integration.wandb import WandbLoggerCallback
-
 #  from ray.tune.logger import TBXLoggerCallback
 from ray.tune.schedulers import ASHAScheduler
 from ray.tune.search.hyperopt import HyperOptSearch
@@ -28,24 +26,24 @@ from torchvision import datasets, transforms
 class ConvNet(nn.Module):
     def __init__(self):
         super().__init__()
-        # In this example, we don't change the model architecture
-        # due to simplicity.
-        self.conv1 = nn.Conv2d(1, 3, kernel_size=3)
-        self.fc = nn.Linear(192, 10)
+        self.conv1 = nn.Conv2d(1, conf_out_channels, kernel_size=3)
+        self.fc = nn.Linear(64 * conf_out_channels, 10)
+        self.conf_out_channels = conf_out_channels
 
     def forward(self, x):
         x = F.relu(F.max_pool2d(self.conv1(x), 3))
-        x = x.view(-1, 192)
+        x = x.view(-1, 64 * self.conf_out_channels)
         x = self.fc(x)
         return F.log_softmax(x, dim=1)
 
 
-# Change these values if you want the training to run quicker or slower.
-EPOCH_SIZE = 512
-TEST_SIZE = 256
-
-
-def train(model, optimizer, train_loader):
+def train(
+    model: nn.Module,
+    optimizer: torch.optim.Optimizer,
+    train_loader: DataLoader,
+    *,
+    epoch_size=512,
+) -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
@@ -60,7 +58,7 @@ def train(model, optimizer, train_loader):
         optimizer.step()
 
 
-def test(model, data_loader):
+def test(model: nn.Module, data_loader: DataLoader, *, test_size=256) -> float:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.eval()
     correct = 0
@@ -79,43 +77,50 @@ def test(model, data_loader):
     return correct / total
 
 
-def train_mnist(config):
-    mnist_transforms = transforms.Compose(
-        [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
-    )
+class Trainable(tune.Trainable):
+    def setup(self, config):
+        mnist_transforms = transforms.Compose(
+            [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
+        )
 
-    data_dir = Path("~/data").expanduser()
-    train_loader = DataLoader(
-        datasets.MNIST(
-            str(data_dir), train=True, download=True, transform=mnist_transforms
-        ),
-        batch_size=64,
-        shuffle=True,
-    )
-    test_loader = DataLoader(
-        datasets.MNIST(str(data_dir), train=False, transform=mnist_transforms),
-        batch_size=64,
-        shuffle=True,
-    )
+        data_dir = Path("~/data").expanduser()
+        self.train_loader = DataLoader(
+            datasets.MNIST(
+                str(data_dir), train=True, download=True, transform=mnist_transforms
+            ),
+            batch_size=64,
+            shuffle=True,
+        )
+        self.test_loader = DataLoader(
+            datasets.MNIST(str(data_dir), train=False, transform=mnist_transforms),
+            batch_size=64,
+            shuffle=True,
+        )
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    model = ConvNet()
-    model.to(device)
+        self.model = ConvNet(conf_out_channels=config.get("conf_out_channels", 3)).to(
+            device
+        )
 
-    optimizer = optim.SGD(
-        model.parameters(), lr=config["lr"], momentum=config["momentum"]
-    )
-    for i in range(config.get("n_epochs", 10)):
-        train(model, optimizer, train_loader)
-        acc = test(model, test_loader)
+        self.optimizer = optim.SGD(
+            self.model.parameters(), lr=config["lr"], momentum=config["momentum"]
+        )
+
+    def step(self):
+        train(self.model, self.optimizer, self.train_loader)
+        acc = test(self.model, self.test_loader)
 
         # Send the current training result back to Tune
-        tune.report(mean_accuracy=acc)
+        return dict(mean_accuracy=acc)
 
-        if i % 5 == 0:
-            # This saves the model to the trial directory
-            torch.save(model.state_dict(), "./model.pth")
+    def save_checkpoint(self, checkpoint_dir):
+        path = Path(checkpoint_dir) / "checkpoint.pth"
+        torch.save(self.model.state_dict(), path)
+        return checkpoint_dir
+
+    def load_checkpoint(self, checkpoint_path):
+        self.model.load_state_dict(torch.load(checkpoint_path))
 
 
 @click.command()
@@ -142,11 +147,14 @@ def main(do_tune=False):
             ),
         ],
         sync_config=tune.SyncConfig(syncer=None),
+        stop={"training_iteration": 20},
+        checkpoint_config=CheckpointConfig(checkpoint_at_end=True),
     )
 
     train_config = dict(
         lr=1e-10,
         momentum=0.5,
+        conf_out_channels=9,
     )
 
     if do_tune:
@@ -160,7 +168,7 @@ def main(do_tune=False):
         )
 
         tuner = tune.Tuner(
-            train_mnist,
+            Trainable,
             tune_config=tune.TuneConfig(
                 scheduler=ASHAScheduler(metric="mean_accuracy", mode="max"),
                 num_samples=100,
@@ -170,13 +178,12 @@ def main(do_tune=False):
         )
         tuner.fit()
     else:
-        trainer = TorchTrainer(
-            train_mnist,
-            train_loop_config=train_config,
-            scaling_config=ScalingConfig(num_workers=2),
+        tuner = tune.Tuner(
+            Trainable,
+            param_space=train_config,
             run_config=run_config,
         )
-        trainer.fit()
+        tuner.fit()
 
 
 if __name__ == "__main__":
