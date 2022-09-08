@@ -134,6 +134,21 @@ def main(do_tune=False):
     # Download the dataset first
     datasets.MNIST("~/data", train=True, download=True)
 
+    run_config = RunConfig(
+        callbacks=[
+            # MLflowLoggerCallback(experiment_name="tune_experiment"),
+            WandbLoggerCallback(
+                api_key_file="~/.wandb_api_key", project="Wandb_example"
+            ),
+        ],
+        sync_config=tune.SyncConfig(syncer=None),
+    )
+
+    train_config = dict(
+        lr=1e-10,
+        momentum=0.5,
+    )
+
     if do_tune:
         space = {
             "lr": hp.loguniform("lr", -10, -1),
@@ -151,34 +166,15 @@ def main(do_tune=False):
                 num_samples=100,
                 search_alg=hyperopt_search,
             ),
-            run_config=RunConfig(
-                callbacks=[
-                    # MLflowLoggerCallback(experiment_name="tune_experiment"),
-                    WandbLoggerCallback(
-                        api_key_file="~/.wandb_api_key", project="Wandb_example"
-                    ),
-                ]
-            ),
+            run_config=run_config,
         )
         tuner.fit()
     else:
-        config = dict(
-            lr=1e-10,
-            momentum=0.5,
-        )
         trainer = TorchTrainer(
             train_mnist,
-            train_loop_config=config,
+            train_loop_config=train_config,
             scaling_config=ScalingConfig(num_workers=2),
-            run_config=RunConfig(
-                callbacks=[
-                    # MLflowLoggerCallback(experiment_name="train_experiment"),
-                    # TBXLoggerCallback(),
-                    WandbLoggerCallback(
-                        api_key_file="~/.wandb_api_key", project="Wandb_example"
-                    ),
-                ],
-            ),
+            run_config=run_config,
         )
         trainer.fit()
 
