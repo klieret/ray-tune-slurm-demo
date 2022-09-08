@@ -73,42 +73,42 @@ def test(model, data_loader, test_size=256):
     return correct / total
 
 
-def train_mnist(config):
-    mnist_transforms = transforms.Compose(
-        [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
-    )
+class Trainable(tune.Trainable):
+    def setup(self, config):
+        mnist_transforms = transforms.Compose(
+            [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
+        )
 
-    data_dir = Path("~/data").expanduser()
-    train_loader = DataLoader(
-        datasets.MNIST(
-            str(data_dir), train=True, download=True, transform=mnist_transforms
-        ),
-        batch_size=64,
-        shuffle=True,
-    )
-    test_loader = DataLoader(
-        datasets.MNIST(str(data_dir), train=False, transform=mnist_transforms),
-        batch_size=64,
-        shuffle=True,
-    )
+        data_dir = Path("~/data").expanduser()
+        self.train_loader = DataLoader(
+            datasets.MNIST(
+                str(data_dir), train=True, download=True, transform=mnist_transforms
+            ),
+            batch_size=64,
+            shuffle=True,
+        )
+        self.test_loader = DataLoader(
+            datasets.MNIST(str(data_dir), train=False, transform=mnist_transforms),
+            batch_size=64,
+            shuffle=True,
+        )
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    model = ConvNet(conf_out_channels=config.get("conf_out_channels", 3)).to(device)
+        self.model = ConvNet(conf_out_channels=config.get("conf_out_channels", 3)).to(
+            device
+        )
 
-    optimizer = optim.SGD(
-        model.parameters(), lr=config["lr"], momentum=config["momentum"]
-    )
-    for i in range(config.get("n_epochs", 10)):
-        train(model, optimizer, train_loader)
-        acc = test(model, test_loader)
+        self.optimizer = optim.SGD(
+            self.model.parameters(), lr=config["lr"], momentum=config["momentum"]
+        )
+
+    def step(self):
+        train(self.model, self.optimizer, self.train_loader)
+        acc = test(self.model, self.test_loader)
 
         # Send the current training result back to Tune
-        tune.report(mean_accuracy=acc)
-
-        if i % 5 == 0:
-            # This saves the model to the trial directory
-            torch.save(model.state_dict(), "./model.pth")
+        return dict(mean_accuracy=acc)
 
 
 @click.command()
@@ -156,7 +156,7 @@ def main(do_tune=False):
         )
 
         tuner = tune.Tuner(
-            train_mnist,
+            Trainable,
             tune_config=tune.TuneConfig(
                 scheduler=ASHAScheduler(metric="mean_accuracy", mode="max"),
                 num_samples=100,
@@ -167,7 +167,7 @@ def main(do_tune=False):
         tuner.fit()
     else:
         trainer = TorchTrainer(
-            train_mnist,
+            Trainable,
             train_loop_config=train_config,
             scaling_config=ScalingConfig(num_workers=2),
             run_config=run_config,
