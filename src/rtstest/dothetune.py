@@ -13,12 +13,10 @@ import torch.nn.functional as F
 import torch.optim as optim
 from hyperopt import hp
 from ray import tune
-from ray.air import RunConfig, ScalingConfig
+from ray.air import CheckpointConfig, RunConfig
+from ray.air.callbacks.wandb import WandbLoggerCallback
 
 #  from ray.air.callbacks.mlflow import MLflowLoggerCallback
-from ray.train.torch import TorchTrainer
-from ray.tune.integration.wandb import WandbLoggerCallback
-
 #  from ray.tune.logger import TBXLoggerCallback
 from ray.tune.schedulers import ASHAScheduler
 from ray.tune.search.hyperopt import HyperOptSearch
@@ -31,15 +29,22 @@ class ConvNet(nn.Module):
         super().__init__()
         self.conv1 = nn.Conv2d(1, conf_out_channels, kernel_size=3)
         self.fc = nn.Linear(64 * conf_out_channels, 10)
+        self.conf_out_channels = conf_out_channels
 
     def forward(self, x):
         x = F.relu(F.max_pool2d(self.conv1(x), 3))
-        x = x.view(-1, 192)
+        x = x.view(-1, 64 * self.conf_out_channels)
         x = self.fc(x)
         return F.log_softmax(x, dim=1)
 
 
-def train(model, optimizer, train_loader, epoch_size=512):
+def train(
+    model: nn.Module,
+    optimizer: torch.optim.Optimizer,
+    train_loader: DataLoader,
+    *,
+    epoch_size=512,
+) -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
@@ -54,7 +59,7 @@ def train(model, optimizer, train_loader, epoch_size=512):
         optimizer.step()
 
 
-def test(model, data_loader, test_size=256):
+def test(model: nn.Module, data_loader: DataLoader, *, test_size=256) -> float:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.eval()
     correct = 0
@@ -110,6 +115,14 @@ class Trainable(tune.Trainable):
         # Send the current training result back to Tune
         return dict(mean_accuracy=acc)
 
+    def save_checkpoint(self, checkpoint_dir):
+        path = Path(checkpoint_dir) / "checkpoint.pth"
+        torch.save(self.model.state_dict(), path)
+        return checkpoint_dir
+
+    def load_checkpoint(self, checkpoint_path):
+        self.model.load_state_dict(torch.load(checkpoint_path))
+
 
 @click.command()
 @click.option(
@@ -135,11 +148,14 @@ def main(do_tune=False):
             ),
         ],
         sync_config=tune.SyncConfig(syncer=None),
+        stop={"training_iteration": 20},
+        checkpoint_config=CheckpointConfig(checkpoint_at_end=True),
     )
 
     train_config = dict(
         lr=1e-10,
         momentum=0.5,
+        conf_out_channels=9,
     )
 
     if do_tune:
@@ -166,13 +182,12 @@ def main(do_tune=False):
         )
         tuner.fit()
     else:
-        trainer = TorchTrainer(
+        tuner = tune.Tuner(
             Trainable,
-            train_loop_config=train_config,
-            scaling_config=ScalingConfig(num_workers=2),
+            param_space=train_config,
             run_config=run_config,
         )
-        trainer.fit()
+        tuner.fit()
 
 
 if __name__ == "__main__":
