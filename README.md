@@ -7,6 +7,10 @@
 > **Warning**
 > Experimental repository.
 
+> **Warning**
+> Testing has now mostly switched over to [the actual use case](github.com/klieret/gnn_tracking_experiments). See
+> scripts there or PM me for more information.
+
 ## 📝 Description
 
 Testing ray tune with hyperopt and reporting to mlflow/wandb with slurm batch submission on the the Princeton tigergpu cluster.
