@@ -3,23 +3,20 @@
 
 from __future__ import annotations
 
-import copy
 from pathlib import Path
+from typing import Any
 
 import click
+import optuna
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-from hyperopt import hp
 from ray import tune
 from ray.air import CheckpointConfig, RunConfig
 from ray.air.callbacks.wandb import WandbLoggerCallback
-
-#  from ray.air.callbacks.mlflow import MLflowLoggerCallback
-#  from ray.tune.logger import TBXLoggerCallback
 from ray.tune.schedulers import ASHAScheduler
-from ray.tune.search.hyperopt import HyperOptSearch
+from ray.tune.search.optuna import OptunaSearch
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
@@ -124,6 +121,13 @@ class Trainable(tune.Trainable):
         self.model.load_state_dict(torch.load(checkpoint_path))
 
 
+def suggest_config(trial: optuna.Trial) -> dict[str, Any]:
+    trial.suggest_loguniform("lr", 1e-10, 1e-1)
+    trial.suggest_uniform("momentum", 0.1, 0.9)
+    trial.suggest_categorical("conf_out_channels", [3, 6, 9])
+    return {}
+
+
 @click.command()
 @click.option(
     "--tune",
@@ -133,7 +137,8 @@ class Trainable(tune.Trainable):
     show_default=True,
     default=False,
 )
-def main(do_tune=False):
+@click.option("--gpu", is_flag=True, default=False)
+def main(do_tune=False, gpu=False):
     # Uncomment this to enable distributed execution
     # `ray.init(address="auto")`
 
@@ -142,9 +147,8 @@ def main(do_tune=False):
 
     run_config = RunConfig(
         callbacks=[
-            # MLflowLoggerCallback(experiment_name="tune_experiment"),
             WandbLoggerCallback(
-                api_key_file="~/.wandb_api_key", project="Wandb_example"
+                api_key_file="~/.wandb_api_key", project="ray-tune-slurm-test"
             ),
         ],
         sync_config=tune.SyncConfig(syncer=None),
@@ -159,24 +163,20 @@ def main(do_tune=False):
     )
 
     if do_tune:
-        space = copy.deepcopy(train_config)
-        space.update(
-            {
-                "lr": hp.loguniform("lr", -10, -1),
-                "momentum": hp.uniform("momentum", 0.1, 0.9),
-                "conf_out_channels": hp.choice("conf_out_channels", [3, 6, 9]),
-            }
-        )
-        hyperopt_search = HyperOptSearch(
-            space, metric="mean_accuracy", mode="max", n_initial_points=40
+        optuna_search = OptunaSearch(
+            suggest_config,
+            metric="mean_accuracy",
+            mode="max",
         )
 
         tuner = tune.Tuner(
-            Trainable,
+            tune.with_resources(
+                Trainable, {"gpu": 4 if gpu else 0, "cpu": 4 if gpu else 1}
+            ),
             tune_config=tune.TuneConfig(
                 scheduler=ASHAScheduler(metric="mean_accuracy", mode="max"),
-                num_samples=100,
-                search_alg=hyperopt_search,
+                num_samples=30,
+                search_alg=optuna_search,
             ),
             run_config=run_config,
         )

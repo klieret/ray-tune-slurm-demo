@@ -8,16 +8,20 @@
 > Experimental repository.
 
 > **Warning**
-> Testing has now mostly switched over to [the actual use case](github.com/klieret/gnn_tracking_experiments). See
+> Development has now mostly switched over to [the actual use case](github.com/klieret/gnn_tracking_experiments). See
 > scripts there or PM me for more information.
 
 ## 📝 Description
 
-Testing ray tune with hyperopt and reporting to mlflow/wandb with slurm batch submission on the the Princeton tigergpu cluster.
+Running hyperparameter optimization with the following stack of tools:
+
+* Ray tune as parent framework and to start jobs with SLURM (on the Princeton `tigergpu` cluster)
+* Optuna to suggest the hyperaprameters
+* Wandb to log and visualize the results
 
 ## 📦 Installation
 
-Use the conda environment `pip` install the package.
+Use the conda environment, then `pip` install the package.
 
 ## 🔥 Running it!
 
