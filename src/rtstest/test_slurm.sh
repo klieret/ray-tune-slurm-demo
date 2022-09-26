@@ -13,7 +13,7 @@
 ### Give all resources to a single Ray task, ray can manage the resources internally
 #SBATCH --ntasks-per-node=1
 #SBATCH --gres=gpu:1             # number of gpus per node
-#SBATCH --time=00:01:30          # total run time limit (HH:MM:SS)
+#SBATCH --time=00:03:30          # total run time limit (HH:MM:SS)
 # Load modules or your own conda environment here
 # module load pytorch/v1.4.0-gpu
 # conda activate ${CONDA_ENV}
@@ -62,4 +62,4 @@ done
 
 # ===== Call your code below =====
 export WANDB_MODE=offline
-python3 dothetune.py --tune
+python3 dothetune.py --tune --gpu
