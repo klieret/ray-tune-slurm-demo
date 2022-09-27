@@ -138,7 +138,13 @@ def suggest_config(trial: optuna.Trial) -> dict[str, Any]:
     default=False,
 )
 @click.option("--gpu", is_flag=True, default=False)
-def main(do_tune=False, gpu=False):
+@click.option(
+    "--restore",
+    help="Restore previous training state from this directory",
+    default=None,
+)
+def main(do_tune=False, gpu=False, restore=None):
+    study_name = "ray-tune-slurm-test"
     # Uncomment this to enable distributed execution
     # `ray.init(address="auto")`
 
@@ -147,9 +153,7 @@ def main(do_tune=False, gpu=False):
 
     run_config = RunConfig(
         callbacks=[
-            WandbLoggerCallback(
-                api_key_file="~/.wandb_api_key", project="ray-tune-slurm-test"
-            ),
+            WandbLoggerCallback(api_key_file="~/.wandb_api_key", project=study_name),
         ],
         sync_config=tune.SyncConfig(syncer=None),
         stop={"training_iteration": 20},
@@ -168,6 +172,9 @@ def main(do_tune=False, gpu=False):
             metric="mean_accuracy",
             mode="max",
         )
+        if restore:
+            print(f"Restoring previous state from {restore}")
+            optuna_search.restore_from_dir(restore)
 
         tuner = tune.Tuner(
             tune.with_resources(
