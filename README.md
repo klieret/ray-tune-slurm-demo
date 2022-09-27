@@ -1,8 +1,11 @@
-# Hyperparameter optimization with ray tune & friends on SLURM
-
-[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/klieret/ray-tune-slurm-test/main.svg)](https://results.pre-commit.ci/latest/github/klieret/ray-tune-slurm-test/main)
-[![License](https://img.shields.io/github/license/klieret/ray-tune-slurm-test)](https://github.com/klieret/ray-tune-slurm-test/blob/master/LICENSE.txt)
-[![Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
+<div align="center">
+<h1>Ray tune & friends on SLURM</h1>
+<p><em>Hyperparameter optimization tryout</em></p>
+<p><a href="https://results.pre-commit.ci/latest/github/klieret/ray-tune-slurm-test/main"><img src="https://results.pre-commit.ci/badge/github/klieret/ray-tune-slurm-test/main.svg" alt="pre-commit.ci status"></a>
+<a href="https://github.com/klieret/ray-tune-slurm-test/actions"><img src="https://github.com/klieret/ray-tune-slurm-test/actions/workflows/test.yml/badge.svg" alt="link checker"></a>
+<a href="https://github.com/klieret/ray-tune-slurm-test/blob/master/LICENSE.txt"><img src="https://img.shields.io/github/license/klieret/ray-tune-slurm-test" alt="License"></a>
+<a href="https://github.com/python/black"><img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Black"></a></p>
+</div>
 
 ## 📝 Description
 
