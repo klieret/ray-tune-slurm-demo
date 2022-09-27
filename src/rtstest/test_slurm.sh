@@ -5,7 +5,7 @@
 # However, some flags that weren't understood by tigergpu were removed again.
 
 #SBATCH --job-name=test_slurm.sh
-#SBATCH --output=test_slurm.log
+#SBATCH --output=slurm-%j.log
 
 ### This script works for any number of nodes, Ray will find and manage all resources
 #SBATCH --nodes=2
