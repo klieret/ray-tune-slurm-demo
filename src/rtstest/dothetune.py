@@ -158,6 +158,7 @@ def main(do_tune=False, gpu=False, restore=None):
         sync_config=tune.SyncConfig(syncer=None),
         stop={"training_iteration": 20},
         checkpoint_config=CheckpointConfig(checkpoint_at_end=True),
+        name=study_name,
     )
 
     train_config = dict(
