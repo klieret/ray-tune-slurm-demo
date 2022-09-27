@@ -122,8 +122,8 @@ class Trainable(tune.Trainable):
 
 
 def suggest_config(trial: optuna.Trial) -> dict[str, Any]:
-    trial.suggest_loguniform("lr", 1e-10, 1e-1)
-    trial.suggest_uniform("momentum", 0.1, 0.9)
+    trial.suggest_float("lr", 1e-10, 1e-1, log=True)
+    trial.suggest_float("momentum", 0.1, 0.9)
     trial.suggest_categorical("conf_out_channels", [3, 6, 9])
     return {}
 
