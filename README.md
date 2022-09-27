@@ -5,6 +5,7 @@
 <a href="https://github.com/klieret/ray-tune-slurm-test/actions"><img src="https://github.com/klieret/ray-tune-slurm-test/actions/workflows/test.yml/badge.svg" alt="link checker"></a>
 <a href="https://github.com/klieret/ray-tune-slurm-test/blob/master/LICENSE.txt"><img src="https://img.shields.io/github/license/klieret/ray-tune-slurm-test" alt="License"></a>
 <a href="https://github.com/python/black"><img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Black"></a></p>
+<img src="readme_assets/scrot.png"/>
 </div>
 
 ## 📝 Description
