@@ -62,4 +62,4 @@ done
 
 # ===== Call your code below =====
 export WANDB_MODE=offline
-python3 dothetune.py --tune --gpu
+python3 ../src/rtstest/dothetune.py --tune --gpu
