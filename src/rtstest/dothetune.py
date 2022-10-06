@@ -179,7 +179,7 @@ def main(do_tune=False, gpu=False, restore=None):
 
         tuner = tune.Tuner(
             tune.with_resources(
-                Trainable, {"gpu": 4 if gpu else 0, "cpu": 4 if gpu else 1}
+                Trainable, {"gpu": 1 if gpu else 0, "cpu": 1 if gpu else 0}
             ),
             tune_config=tune.TuneConfig(
                 scheduler=ASHAScheduler(metric="mean_accuracy", mode="max"),
