@@ -39,15 +39,10 @@ def train(
     model: nn.Module,
     optimizer: torch.optim.Optimizer,
     train_loader: DataLoader,
-    *,
-    epoch_size=512,
 ) -> None:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.train()
-    for batch_idx, (data, target) in enumerate(train_loader):
-        # We set this just for the example to run quickly.
-        if batch_idx * len(data) > epoch_size:
-            return
+    for _batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
         output = model(data)
@@ -156,7 +151,7 @@ def main(do_tune=False, gpu=False, restore=None):
             WandbLoggerCallback(api_key_file="~/.wandb_api_key", project=study_name),
         ],
         sync_config=tune.SyncConfig(syncer=None),
-        stop={"training_iteration": 20},
+        stop={"training_iteration": 40},
         checkpoint_config=CheckpointConfig(checkpoint_at_end=True),
         name=study_name,
     )
