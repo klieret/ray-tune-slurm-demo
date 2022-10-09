@@ -3,11 +3,13 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any
 
 import click
 import optuna
+import ray
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -17,6 +19,7 @@ from ray.air import CheckpointConfig, RunConfig
 from ray.air.callbacks.wandb import WandbLoggerCallback
 from ray.tune.schedulers import ASHAScheduler
 from ray.tune.search.optuna import OptunaSearch
+from ray.util.joblib import register_ray
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
@@ -140,8 +143,10 @@ def suggest_config(trial: optuna.Trial) -> dict[str, Any]:
 )
 def main(do_tune=False, gpu=False, restore=None):
     study_name = "ray-tune-slurm-test"
-    # Uncomment this to enable distributed execution
-    # `ray.init(address="auto")`
+    if "redis_password" in os.environ:
+        # We're running distributed
+        ray.init(address="auto", _redis_password=os.environ["redis_password"])
+        register_ray()
 
     # Download the dataset first
     datasets.MNIST("~/data", train=True, download=True)
