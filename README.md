@@ -17,7 +17,7 @@ This repository demonstrates/tests hyperparameter optimization with the followin
 * [Wandb (weights & measures)][wandb] to log and visualize the results
 
 > **Note**
-> If you want to see this in an actual use case, see the [GNN tracking Hyperparameter Optimization repository](https://github.com/gnn_tracking/hyperparameter_optimization).
+> If you want to see this in an actual use case, see the [GNN tracking Hyperparameter Optimization repository](https://github.com/gnn-tracking/hyperparameter_optimization).
 
 ## 📦 Installation
 
