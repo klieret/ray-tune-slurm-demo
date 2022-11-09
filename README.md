@@ -12,7 +12,7 @@
 
 This repository demonstrates/tests hyperparameter optimization with the following frameworks:
 
-* [Ray tune][tune] as parent framework and to start jobs with [SLURM][slurm] (on the [Princeton `tigergpu` cluster][tigergpu])
+* [Ray tune][tune] as parent framework and to start jobs with [SLURM][slurm]
 * [Optuna][optuna] to suggest the hyperaprameters
 * [Wandb (weights & measures)][wandb] to log and visualize the results
 
