@@ -25,7 +25,7 @@ Use the conda environment, then `pip` install the package.
 
 ## 🔥 Running it!
 
-First run `src/rtstest/dothetest.py` (no batch submission) to also download the data file
+First run `src/rtstest/dothetune.py` (no batch submission) to also download the data file
 (because no internet connection on the compute nodes), then use one of the
 `*.sh` slurm files to run with batch system.
 
