@@ -21,7 +21,7 @@ This repository demonstrates/tests hyperparameter optimization with the followin
 
 ## 📦 Installation
 
-Use the conda environment, then `pip` install the package.
+Use the conda environment, THEN `pip` install the package.
 
 ## 🔥 Running it!
 
