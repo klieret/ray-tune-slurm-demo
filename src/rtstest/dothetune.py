@@ -8,8 +8,8 @@ from pathlib import Path
 from typing import Any
 
 import click
-import numpy as np
 import optuna
+import pandas as pd
 import ray
 import torch
 import torch.nn as nn
@@ -109,7 +109,7 @@ class Trainable(tune.Trainable):
         acc = test(self.model, self.test_loader)
 
         # Send the current training result back to Tune
-        return dict(mean_accuracy=acc, some_array=np.array([1, 2, 3]))
+        return dict(mean_accuracy=acc, some_table=pd.DataFrame({"a": [1, 2, 3]}))
 
     def save_checkpoint(self, checkpoint_dir):
         path = Path(checkpoint_dir) / "checkpoint.pth"
