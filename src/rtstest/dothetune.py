@@ -156,7 +156,7 @@ def main(do_tune=False, gpu=False, restore=None):
             WandbLoggerCallback(api_key_file="~/.wandb_api_key", project=study_name),
         ],
         sync_config=tune.SyncConfig(syncer=None),
-        stop={"training_iteration": 40},
+        stop={"training_iteration": 5},
         checkpoint_config=CheckpointConfig(checkpoint_at_end=True),
         name=study_name,
     )
