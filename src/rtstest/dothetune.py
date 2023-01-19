@@ -22,6 +22,7 @@ from ray.tune.search.optuna import OptunaSearch
 from ray.util.joblib import register_ray
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
+from wandb_osh.ray_hooks import TriggerWandbSyncRayHook
 
 
 class ConvNet(nn.Module):
@@ -162,6 +163,7 @@ def main(do_tune=False, gpu=False, restore=None):
     run_config = RunConfig(
         callbacks=[
             WandbLoggerCallback(api_key_file="~/.wandb_api_key", project=study_name),
+            TriggerWandbSyncRayHook(),
         ],
         sync_config=tune.SyncConfig(syncer=None),
         stop={"training_iteration": 5},

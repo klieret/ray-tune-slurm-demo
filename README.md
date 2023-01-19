@@ -14,7 +14,7 @@ This repository demonstrates/tests hyperparameter optimization with the followin
 
 * [Ray tune][tune] as parent framework and to start jobs with [SLURM][slurm]
 * [Optuna][optuna] to suggest the hyperaprameters
-* [Wandb (weights & measures)][wandb] to log and visualize the results
+* [Wandb (weights & measures)][wandb] to log and visualize the results and [wandb-osh] to live-synchronize it (working around having no internet access on the compute nodes)
 
 > **Note**
 > If you want to see this tech stack in an actual use case, see the [GNN tracking Hyperparameter Optimization repository](https://github.com/gnn-tracking/hyperparameter_optimization).
