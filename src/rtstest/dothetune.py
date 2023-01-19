@@ -145,7 +145,15 @@ def main(do_tune=False, gpu=False, restore=None):
     study_name = "ray-tune-slurm-test"
     if "redis_password" in os.environ:
         # We're running distributed
-        ray.init(address="auto", _redis_password=os.environ["redis_password"])
+        print("ip head: ", os.environ["ip_head"])
+        print("redis pwd: ", os.environ["redis_password"])
+        _node_ip_addr = os.environ["ip_head"].split(":")[0]
+        print("node ip addr: ", _node_ip_addr)
+        ray.init(
+            address=os.environ["ip_head"],
+            _redis_password=os.environ["redis_password"],
+            _node_ip_address=_node_ip_addr,
+        )
         register_ray()
 
     # Download the dataset first
@@ -178,9 +186,7 @@ def main(do_tune=False, gpu=False, restore=None):
             optuna_search.restore_from_dir(restore)
 
         tuner = tune.Tuner(
-            tune.with_resources(
-                Trainable, {"gpu": 1 if gpu else 0, "cpu": 1 if gpu else 0}
-            ),
+            tune.with_resources(Trainable, {"gpu": 1 if gpu else 0, "cpu": 1}),
             tune_config=tune.TuneConfig(
                 scheduler=ASHAScheduler(metric="mean_accuracy", mode="max"),
                 num_samples=30,
