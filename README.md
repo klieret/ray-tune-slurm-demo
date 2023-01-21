@@ -25,24 +25,24 @@ Use the conda environment, THEN `pip` install the package.
 
 ## 🔥 Running it!
 
-## First test without batch system
+### First test without batch system
 
 * First run `src/rtstest/dothetune.py` (no batch submission) to also download the data file
   (because no internet connection on the compute nodes)
 
-## Option 1: All-in-one
+### Option 1: All-in-one
 
 For a single batch jobs that uses multiple nodes to start both the head node and the works, see
 `slurm/all-in-one`. While this is the example used in the ray documentation, it might not be
 the best for most use cases, as it relies on having enough available nodes directly available
 for enough time to complete all requested trials.
 
-### Live syncing to wandb
+#### Live syncing to wandb
 
 Because the compute nodes usually do not have internet, we need a separate tool for this.
 See the documentation of [wandb-osh] for how to start the syncer on the head node.
 
-## Option 2: Head node and worker nodes
+### Option 2: Head node and worker nodes
 
 Here, we start the ray head on the head (login) node and then use batch submission to start
 worker nodes asynchronously.
