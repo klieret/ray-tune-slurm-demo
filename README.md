@@ -54,7 +54,7 @@ Follow the following steps
 
 > **Note**
 > In my HPO scripts at [my main ML project][gnn-tracking-hpo] I instead write out the IP
-> and password to files in my home directory and have dependend scripts read from there
+> and password to files in my home directory and have dependent scripts read from there
 > rather than passing them around on the command line.
 
 Once the batch jobs for the workers start running, you should see activity in the tuning script output.
