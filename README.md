@@ -17,7 +17,7 @@ This repository demonstrates/tests hyperparameter optimization with the followin
 * [Wandb (weights & measures)][wandb] to log and visualize the results
 
 > **Note**
-> If you want to see this tech stack in an actual use case, see the [GNN tracking Hyperparameter Optimization repository](https://github.com/gnn-tracking/hyperparameter_optimization).
+> If you want to see this tech stack in an actual use case, see the [GNN tracking Hyperparameter Optimization repository][gnn-tracking-hpo].
 
 ## 📦 Installation
 
@@ -35,6 +35,12 @@ Use the conda environment, THEN `pip` install the package.
 For a single batch jobs that uses multiple nodes to start both the head node and the works, see
 `slurm/all-in-one`. While this is the example used in the ray documentation, it might not be
 the best for most use cases, as it relies on having enough available nodes directly available
+for enough time to complete all requested trials.
+
+### Live syncing to wandb
+
+Because the compute nodes usually do not have internet, we need a separate tool for this.
+See the documentation of [wandb-osh] for how to start the syncer on the head node.
 
 ## Option 2: Head node and worker nodes
 
@@ -46,12 +52,12 @@ Follow the following steps
 2. Submit several batch jobs `sbatch slurm/head_workers/start-on-worker.slurm <IP> <REDIS PWD>`
 3. Start your tuning script on the head node: `slurm/head_workers/start-program.sh <IP> <REDIS PWD>`
 
+> **Note**
+> In my HPO scripts at [my main ML project][gnn-tracking-hpo] I instead write out the IP
+> and password to files in my home directory and have dependend scripts read from there
+> rather than passing them around on the command line.
+
 Once the batch jobs for the workers start running, you should see activity in the tuning script output.
-
-## Live syncing to wandb
-
-Because the compute nodes usually do not have internet, we need a separate tool for this.
-See the documentation of [wandb-osh] for how to start the syncer on the head node.
 
 [tune]: https://docs.ray.io/en/master/tune/index.html
 [tigergpu]: https://researchcomputing.princeton.edu/systems/tiger
@@ -59,3 +65,4 @@ See the documentation of [wandb-osh] for how to start the syncer on the head nod
 [wandb]: https://wandb.ai/site
 [slurm]: https://slurm.schedmd.com/
 [wandb-osh]: https://github.com/klieret/wandb-offline-sync-hook/
+[gnn-tracking-hpo]: https://github.com/gnn-tracking/hyperparameter_optimization
