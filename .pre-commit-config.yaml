@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/psf/black
-    rev: 24.1.1
+    rev: 24.3.0
     hooks:
       - id: black
       - id: black-jupyter
@@ -33,7 +33,7 @@ repos:
       - id: flake8
         additional_dependencies: ["flake8-bugbear"]
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.8.0"
+    rev: "v1.9.0"
     hooks:
       - id: mypy
   - repo: https://github.com/codespell-project/codespell
@@ -47,7 +47,7 @@ repos:
       - id: nbstripout
         args: ["--extra-keys", "cell.metadata.pycharm"]
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.15.0
+    rev: v3.15.2
     hooks:
       - id: pyupgrade
         args: ["--py37-plus"]
