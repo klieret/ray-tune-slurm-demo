@@ -16,7 +16,7 @@ import torch.nn.functional as F
 import torch.optim as optim
 from ray import tune
 from ray.air import CheckpointConfig, RunConfig
-from ray.air.callbacks.wandb import WandbLoggerCallback
+from ray.air.integrations.wandb import WandbLoggerCallback
 from ray.tune.schedulers import ASHAScheduler
 from ray.tune.search.optuna import OptunaSearch
 from ray.util.joblib import register_ray
@@ -161,9 +161,9 @@ def main(do_tune=False, gpu=False, restore=None):
 
     run_config = RunConfig(
         callbacks=[
-            WandbLoggerCallback(api_key_file="~/.wandb_api_key", project=study_name),
+            WandbLoggerCallback(project=study_name),
         ],
-        sync_config=tune.SyncConfig(syncer=None),
+        sync_config=ray.train.SyncConfig(),
         stop={"training_iteration": 5},
         checkpoint_config=CheckpointConfig(checkpoint_at_end=True),
         name=study_name,
